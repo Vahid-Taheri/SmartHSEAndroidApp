@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.SmartHSE" parent="Theme.AppCompat" />
+    <style name="Theme.SmartHSE" parent="Theme.MaterialComponents.DayNight.NoActionBar.Bridge">
+        <item name="background">@color/YankeesBlue20</item>
+        <item name="colorPrimary">@color/BrandeisBlue100</item>
+    </style>
 </resources>

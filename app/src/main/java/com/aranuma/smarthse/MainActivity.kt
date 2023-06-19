@@ -2,26 +2,38 @@ package com.aranuma.smarthse
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
-import android.widget.AdapterView.OnItemClickListener
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import no.nordicsemi.android.support.v18.scanner.*
 
+
 class MainActivity : AppCompatActivity() {
 
+    private val REQUEST_PERMISSION_LOCATION:Int =1
+    private val REQUEST_BLUETOOTH_CONNECT:Int = 2
+    private val REQUEST_BLUETOOTH_SCAN:Int = 3
+
+    private lateinit var bluetoothAdapter: BluetoothAdapter
     private lateinit var scanner: BluetoothLeScannerCompat
     private lateinit var adapter: ArrayAdapter<String>
     private lateinit var devicesListView: ListView
+    private lateinit var btTurnOnView: ConstraintLayout
+    private lateinit var btScanView: ConstraintLayout
+    private lateinit var btTurnOnButton: Button
     private lateinit var scanButton: Button
     private val scannedDevices: ArrayList<ScanResult> = ArrayList()
 
@@ -30,10 +42,41 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+
+        btTurnOnView = findViewById(R.id.bt_turn_on_view)
+        btScanView = findViewById(R.id.bt_scan_view)
         devicesListView = findViewById(R.id.list_devices)
+        btTurnOnButton = findViewById(R.id.bt_turn_on_btn)
         scanButton = findViewById(R.id.send_button)
+
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1)
         devicesListView.adapter = adapter
+
+        val bluetoothManager = this.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+
+        bluetoothAdapter = bluetoothManager.adapter
+        scanner = BluetoothLeScannerCompat.getScanner()
+
+        checkBluetooth()
+
+        btTurnOnButton.setOnClickListener {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
+                    REQUEST_BLUETOOTH_CONNECT
+                )
+            } else {
+                turnOnBluetooth()
+            }
+        }
+        scanButton.setOnClickListener{
+            startScanning()
+        }
 
         devicesListView.setOnItemClickListener{ parent, view, position, id ->
             val result = scannedDevices[position]
@@ -43,15 +86,15 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("deviceAddress", deviceAddress)
             startActivity(intent)
         }
-
-        scanner = BluetoothLeScannerCompat.getScanner()
-
-
-        scanButton.setOnClickListener{
-            startScanning()
-        }
     }
 
+    private fun checkBluetooth(){
+
+        if (bluetoothAdapter.isEnabled) {
+            btTurnOnView.visibility = View.GONE
+            btScanView.visibility = View.VISIBLE
+        }
+    }
     private fun startScanning() {
         // Check for location permission required for scanning on Android 6.0 and above
         if (ContextCompat.checkSelfPermission(
@@ -64,7 +107,18 @@ class MainActivity : AppCompatActivity() {
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 REQUEST_PERMISSION_LOCATION
             )
-        } else {
+        } else if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_SCAN
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.BLUETOOTH_SCAN),
+                REQUEST_BLUETOOTH_SCAN
+            )
+        }
+        else {
             adapter.clear()
             val settings = ScanSettings.Builder()
                 .setLegacy(false)
@@ -76,7 +130,20 @@ class MainActivity : AppCompatActivity() {
             // Add any filters if needed
 
             scanner.startScan(filters, settings, scanCallback)
+            scanButton.text = getString(R.string.stop_scan)
+            scanButton.setOnClickListener{
+                stopScanning(this)
+            }
         }
+    }
+
+    private fun stopScanning(context:Context) {
+        scanner.stopScan(scanCallback)
+        scanButton.text = getString(R.string.scan)
+        scanButton.setOnClickListener{
+            startScanning()
+        }
+
     }
 
     private val scanCallback = object : ScanCallback() {
@@ -120,16 +187,27 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_PERMISSION_LOCATION) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (requestCode == REQUEST_PERMISSION_LOCATION || requestCode == REQUEST_BLUETOOTH_SCAN)
                 startScanning()
-            } else {
-                // Permission denied, handle accordingly
-            }
+            else if (requestCode == REQUEST_BLUETOOTH_CONNECT)
+                turnOnBluetooth()
+
+        } else {
+            // Permission denied, handle accordingly
         }
     }
 
-    companion object {
-        private const val REQUEST_PERMISSION_LOCATION = 123
+    private fun turnOnBluetooth() {
+        val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+        resultLauncher.launch(intent)
+    }
+
+    var resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // There are no request codes
+            // val data: Intent? = result.data
+            checkBluetooth()
+        }
     }
 }

@@ -2,4 +2,6 @@
     <string name="app_name">SmartHSE</string>
     <string name="scan">Scan</string>
     <string name="scan_bluetooth_devices">Scan Bluetooth Devices</string>
+    <string name="bt_turn_on">Turn on</string>
+    <string name="stop_scan">Stop scan</string>
 </resources>
