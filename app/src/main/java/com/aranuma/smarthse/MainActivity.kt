@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         btScanView = findViewById(R.id.bt_scan_view)
         devicesListView = findViewById(R.id.list_devices)
         btTurnOnButton = findViewById(R.id.bt_turn_on_btn)
-        scanButton = findViewById(R.id.send_button)
+        scanButton = findViewById(R.id.scan_button)
 
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1)
         devicesListView.adapter = adapter

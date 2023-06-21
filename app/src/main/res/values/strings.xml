@@ -4,4 +4,11 @@
     <string name="scan_bluetooth_devices">Scan Bluetooth Devices</string>
     <string name="bt_turn_on">Turn on</string>
     <string name="stop_scan">Stop scan</string>
+    <string name="bt_disconnect">Disconnect</string>
+    <string name="sync_data_time"><![CDATA[Sync data & time]]></string>
+    <string name="date_time_synced"><![CDATA[Date & time synced]]></string>
+    <string name="set_profile">Set profile</string>
+    <string name="get_temperature">Get temperature</string>
+    <string name="set_user">Set user</string>
+    <string name="battery_percent_label">Battery percent:</string>
 </resources>
