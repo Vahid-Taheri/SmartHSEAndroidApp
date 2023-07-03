@@ -11,4 +11,6 @@
     <string name="get_temperature">Get temperature</string>
     <string name="set_user">Set user</string>
     <string name="battery_percent_label">Battery percent:</string>
+    <string name="percent">%</string>
+    <string name="open_data_gateway">Open data gateway</string>
 </resources>
