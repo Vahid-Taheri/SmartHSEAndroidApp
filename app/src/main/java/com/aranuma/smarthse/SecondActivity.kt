@@ -20,13 +20,13 @@ class SecondActivity : AppCompatActivity() {
     private var deviceAddress: String? = null
     private var transparentDataValue = false
 
-    private lateinit var versionTextView:TextView
-    private lateinit var batteryTextView:TextView
-    private lateinit var disconnectBtn:Button
-    private lateinit var syncTimeBtn:Button
-    private lateinit var getTemperatureBtn:Button
-    private lateinit var setTransparentData:Button
-    private lateinit var sdk:SDK
+    private lateinit var versionTextView: TextView
+    private lateinit var batteryTextView: TextView
+    private lateinit var disconnectBtn: Button
+    private lateinit var syncTimeBtn: Button
+    private lateinit var getTemperatureBtn: Button
+    private lateinit var setTransparentData: Button
+    private lateinit var sdk: SDK
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_second)
@@ -40,30 +40,39 @@ class SecondActivity : AppCompatActivity() {
         getTemperatureBtn = findViewById(R.id.get_temperature)
         setTransparentData = findViewById(R.id.set_transparent_btn)
 
-        sdk = SDK(applicationContext,1,callBack)
+        sdk = SDK(applicationContext, 1, callBack)
 
         sdk.connect(deviceAddress)
 
-        disconnectBtn.setOnClickListener{
+        disconnectBtn.setOnClickListener {
             sdk.disconnectDevice(false)
         }
 
-        syncTimeBtn.setOnClickListener{
-            sdk.setDateTime(Calendar.getInstance(),0,0)
-            syncTimeBtn.text= getText(R.string.date_time_synced)
-            syncTimeBtn.isEnabled=false
+        syncTimeBtn.setOnClickListener {
+            sdk.setDateTime(Calendar.getInstance(), 0, 0)
+            syncTimeBtn.text = getText(R.string.date_time_synced)
+            syncTimeBtn.isEnabled = false
             syncTimeBtn.setBackgroundColor(resources.getColor(R.color.UFOGreen100))
         }
 
-        getTemperatureBtn.setOnClickListener{
+        getTemperatureBtn.setOnClickListener {
             sdk.write(ParserHelper.getTemperatureDataValue());
         }
 
-        setTransparentData.setOnClickListener{
+        setTransparentData.setOnClickListener {
             transparentDataValue = !transparentDataValue
             sdk.setTransparentData(!transparentDataValue)
+
+            val value = ParserHelper.getTransparentValue(
+                if (transparentDataValue)
+                    1
+                else
+                    0
+            )
+            sdk.write(value)
         }
     }
+
     private val callBack: SDKCallBack = object : SDKCallBack() {
         override fun onDeviceFound(device: FoundDevice, rssi: Int, scanRecord: ByteArray) {
             if (device.mac.equals(deviceAddress, ignoreCase = true)) {
@@ -73,7 +82,7 @@ class SecondActivity : AppCompatActivity() {
         }
 
         override fun onConnectionStateChange(state: Int) {
-            val intent = Intent(this@SecondActivity,MainActivity::class.java)
+            val intent = Intent(this@SecondActivity, MainActivity::class.java)
             Log.e(TAG, "Connection status changed")
             if (state == STATE_CONNECT_SUCCESS) {
                 sdk.openDescriptor() // After connecting successfully, you must call this otherwise you will not be able to receive data.。
@@ -90,7 +99,8 @@ class SecondActivity : AppCompatActivity() {
             if (status == STATUS_SUCCESS) {
                 Log.e(TAG, "Successful connection")
                 runOnUiThread {
-                    Toast.makeText(this@SecondActivity, "Successful connection", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@SecondActivity, "Successful connection", Toast.LENGTH_LONG)
+                        .show()
                     versionTextView.text = sdk.version.getString("result")
                     batteryTextView.text = "Battery: ${sdk.battery.getString("result")}%"
                 }
